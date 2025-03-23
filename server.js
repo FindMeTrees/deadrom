@@ -59,11 +59,20 @@ io.on('connection', (socket) => {
         io.emit('receiveMessage', data);
     });
 
-    socket.on('clearChat', () => {
-        console.log(`Chat cleared by user: ${ip}`);
-        messages = [];
-        io.emit("clearChat");
-    });
+socket.on('clearChat', () => {
+    const ip = getClientIp(socket); // Get user's real IP
+
+    if (ip !== "212.58.121.65") { // Change this to your real IP
+        console.log(`Unauthorized clear attempt from ${ip}`);
+        socket.emit("receiveMessage", { username: "System", message: "❌ You are not allowed to clear the chat!" });
+        return;
+    }
+
+    console.log(`✅ Chat cleared by admin: ${ip}`);
+    messages = []; // Clear messages
+    io.emit("clearChat"); // Notify all users
+});
+
 
     // Admin command to ban a user
     socket.on('banUser', (banData) => {
