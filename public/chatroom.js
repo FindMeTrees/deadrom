@@ -58,3 +58,8 @@ socket.on("loadMessages", (messages) => {
 socket.on("clearChat", () => {
     document.getElementById("messageList").innerHTML = ""; // Clear chat messages
 });
+
+// Redirect users to login page if they didn't enter a username
+if (!localStorage.getItem("username")) {
+    window.location.href = "login.html"; // Send them back to login
+}
