@@ -13,31 +13,73 @@ const io = socketIo(server, {
     }
 });
 
-// Store messages
+// Store messages and banned users (IP -> reason)
 let messages = [];
+let bannedUsers = {};
+
+// Function to get real IP address
+function getClientIp(socket) {
+    let ip = socket.handshake.headers["x-forwarded-for"] || socket.request.connection.remoteAddress;
+    if (ip.includes(",")) ip = ip.split(",")[0]; // Handle multiple forwarded IPs
+    return ip.trim();
+}
 
 io.on('connection', (socket) => {
-    console.log("A user connected.");
+    const ip = getClientIp(socket);
+    console.log(`User connected: IP=${ip}`);
+
+    // Check if the user is banned
+    if (bannedUsers[ip]) {
+        console.log(`Blocked connection from banned IP: ${ip}`);
+        socket.emit("banned", bannedUsers[ip]); // Notify the user
+        socket.disconnect();
+        return;
+    }
 
     // Send existing messages to new users
     socket.emit('loadMessages', messages);
 
+    let userName = ""; // Store username for disconnect event
+
+    // Handle when a user sets their username
+    socket.on("setUsername", (username) => {
+        userName = username; // Store username
+        console.log(`User joined: ${username}`);
+
+        // Send a system message to all users
+        const joinMessage = { username: "System", message: `${username} has joined the chat!` };
+        messages.push(joinMessage);
+        io.emit("receiveMessage", joinMessage);
+    });
+
     socket.on('sendMessage', (data) => {
-        if (!data || !data.username || !data.message) return;
+        if (bannedUsers[ip]) return; // Prevent banned users from sending messages
 
         messages.push(data);
         io.emit('receiveMessage', data);
     });
 
-    // ✅ Allow only "/clear" command to remove messages
-    socket.on('clearChat', () => {
-        console.log("Chat cleared.");
-        messages = [];
-        io.emit("clearChat");
+    // ✅ Admin command to ban a user
+    socket.on('banUser', (banData) => {
+        if (!banData.adminKey || banData.adminKey !== "SECRET_ADMIN_KEY") return; // Secure admin action
+        if (!banData.ip) return;
+
+        bannedUsers[banData.ip] = banData.reason || "No reason provided";
+        console.log(`User banned: IP=${banData.ip}, Reason=${banData.reason}`);
+
+        io.emit("userBanned", { ip: banData.ip, reason: banData.reason });
     });
 
+    // Handle when a user disconnects
     socket.on('disconnect', () => {
-        console.log("A user disconnected.");
+        console.log(`User disconnected: ${userName || "Unknown User"}`);
+
+        if (userName) {
+            // Send "User Left" message to chat
+            const leaveMessage = { username: "System", message: `${userName} has left the chat!` };
+            messages.push(leaveMessage);
+            io.emit("receiveMessage", leaveMessage);
+        }
     });
 });
 
