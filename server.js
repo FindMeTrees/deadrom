@@ -39,13 +39,16 @@ io.on('connection', (socket) => {
     // Send existing messages to new users
     socket.emit('loadMessages', messages);
 
+    let userName = ""; // Store username for disconnect event
+
     // Handle when a user sets their username
     socket.on("setUsername", (username) => {
+        userName = username; // Store username
         console.log(`User joined: ${username}`);
 
         // Send a system message to all users
         const joinMessage = { username: "System", message: `${username} has joined the chat!` };
-        messages.push(joinMessage); // Store in chat history
+        messages.push(joinMessage);
         io.emit("receiveMessage", joinMessage);
     });
 
@@ -73,8 +76,28 @@ io.on('connection', (socket) => {
         io.emit("userBanned", { ip: banData.ip, reason: banData.reason });
     });
 
+    // Admin command to unban a user
+    socket.on('unbanUser', (unbanData) => {
+        if (!unbanData.adminKey || unbanData.adminKey !== "SECRET_ADMIN_KEY") return; // Protect admin actions
+        if (!unbanData.ip) return;
+
+        if (bannedUsers[unbanData.ip]) {
+            delete bannedUsers[unbanData.ip]; // Remove user from banned list
+            console.log(`User unbanned: IP=${unbanData.ip}`);
+            io.emit("userUnbanned", { ip: unbanData.ip });
+        }
+    });
+
+    // Handle when a user disconnects
     socket.on('disconnect', () => {
-        console.log(`User disconnected: IP=${ip}`);
+        console.log(`User disconnected: ${userName || "Unknown User"}`);
+
+        if (userName) {
+            // Send "User Left" message to chat
+            const leaveMessage = { username: "System", message: `${userName} has left the chat!` };
+            messages.push(leaveMessage);
+            io.emit("receiveMessage", leaveMessage);
+        }
     });
 });
 
