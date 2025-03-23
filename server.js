@@ -52,12 +52,20 @@ io.on('connection', (socket) => {
         io.emit("receiveMessage", joinMessage);
     });
 
-    socket.on('sendMessage', (data) => {
-        if (bannedUsers[ip]) return; // Prevent banned users from sending messages
+socket.on('sendMessage', (data) => {
+    const ip = getClientIp(socket); // Ensure IP is being captured
+    if (bannedUsers[ip]) return; // Prevent banned users from sending messages
 
-        messages.push(data);
-        io.emit('receiveMessage', data);
-    });
+    if (!data || !data.username || !data.message) {
+        console.log("⚠️ Message missing data. Ignoring.");
+        return;
+    }
+
+    console.log(`💬 ${data.username}: ${data.message}`); // Log messages for debugging
+    messages.push(data);
+    io.emit('receiveMessage', data); // Send message to all users
+});
+
 
 socket.on('clearChat', () => {
     const ip = getClientIp(socket); // Get user's real IP
