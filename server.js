@@ -75,7 +75,7 @@ socket.on('clearChat', () => {
     socket.on('ipBanUser', (banData) => {
     const ip = getClientIp(socket); // Get the admin's IP
 
-    if (ip !== "YOUR_IP_ADDRESS") { // 🔥 Replace with your real IP
+    if (ip !== "212.58.121.65") { // 🔥 Replace with your real IP
         console.log(`❌ Unauthorized ban attempt from ${ip}`);
         socket.emit("receiveMessage", { username: "System", message: "❌ You are not allowed to use /ipban!" });
         return;
