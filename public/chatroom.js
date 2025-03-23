@@ -21,6 +21,22 @@ function sendMessage() {
 
     const messageText = messageInput.value.trim();
 
+    // ✅ Admin command to ban a user: "/ban <IP> <Reason>"
+    if (messageText.startsWith("/ban ")) {
+        const parts = messageText.split(" ");
+        const ip = parts[1];
+        const reason = parts.slice(2).join(" ") || "No reason provided";
+
+        socket.emit("banUser", {
+            adminKey: "SECRET_ADMIN_KEY", // ⚠️ Change this to a secure key
+            ip: ip,
+            reason: reason
+        });
+
+        messageInput.value = "";
+        return;
+    }
+
     // ✅ Command to clear chat: "/clear"
     if (messageText === "/clear") {
         socket.emit("clearChat");
@@ -28,7 +44,7 @@ function sendMessage() {
         return;
     }
 
-    // Send a regular chat message
+    // ✅ Send a regular chat message
     socket.emit("sendMessage", { username, message: messageText });
     messageInput.value = "";
 }
@@ -40,16 +56,26 @@ document.getElementById("messageInput").addEventListener("keypress", function (e
     }
 });
 
-// ✅ Display all messages in chat
+// ✅ Display all messages in chat (including "User Joined" and "User Left" messages)
 socket.on("receiveMessage", (data) => {
     const messageList = document.getElementById("messageList");
     const messageElement = document.createElement("li");
 
     if (!data || !data.username || !data.message) return;
 
+    if (data.username === "System") {
+        messageElement.style.fontStyle = "italic"; // Make system messages stand out
+    }
+
     messageElement.textContent = `${data.username}: ${data.message}`;
     messageList.appendChild(messageElement);
     messageList.scrollTop = messageList.scrollHeight;
+});
+
+// ✅ Notify users when someone is banned
+socket.on("userBanned", (data) => {
+    console.log(`User banned: IP=${data.ip}, Reason=${data.reason}`);
+    alert(`A user was banned!\nIP: ${data.ip}\nReason: ${data.reason}`);
 });
 
 // ✅ Clear chat when "/clear" command is used
