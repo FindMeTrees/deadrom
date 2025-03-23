@@ -13,14 +13,14 @@ const io = socketIo(server, {
     }
 });
 
-// Store messages and banned users (IP -> reason)
+// Store messages, banned users, and online users
 let messages = [];
 let bannedUsers = {};
+let onlineUsers = {}; // Store connected users { socketID: username }
 
-// Function to get real IP address
 function getClientIp(socket) {
     let ip = socket.handshake.headers["x-forwarded-for"] || socket.request.connection.remoteAddress;
-    if (ip.includes(",")) ip = ip.split(",")[0]; // Handle multiple forwarded IPs
+    if (ip.includes(",")) ip = ip.split(",")[0]; 
     return ip.trim();
 }
 
@@ -28,54 +28,57 @@ io.on('connection', (socket) => {
     const ip = getClientIp(socket);
     console.log(`User connected: IP=${ip}`);
 
-    // Check if the user is banned
     if (bannedUsers[ip]) {
         console.log(`Blocked connection from banned IP: ${ip}`);
-        socket.emit("banned", bannedUsers[ip]); // Notify the user
+        socket.emit("banned", bannedUsers[ip]); 
         socket.disconnect();
         return;
     }
 
-    // Send existing messages to new users
     socket.emit('loadMessages', messages);
 
-    let userName = ""; // Store username for disconnect event
+    let userName = "";
 
-    // Handle when a user sets their username
     socket.on("setUsername", (username) => {
-        userName = username; // Store username
+        userName = username;
+        onlineUsers[socket.id] = username; // Add to online users
         console.log(`User joined: ${username}`);
 
-        // Send a system message to all users
+        io.emit("updateUsers", Object.values(onlineUsers)); // Send updated user list
+
         const joinMessage = { username: "System", message: `${username} has joined the chat!` };
         messages.push(joinMessage);
         io.emit("receiveMessage", joinMessage);
     });
 
     socket.on('sendMessage', (data) => {
-        if (bannedUsers[ip]) return; // Prevent banned users from sending messages
-
+        if (bannedUsers[ip]) return;
         messages.push(data);
         io.emit('receiveMessage', data);
     });
 
-    // ✅ Admin command to ban a user
+    socket.on('clearChat', () => {
+        console.log("Chat cleared.");
+        messages = [];
+        io.emit("clearChat");
+    });
+
     socket.on('banUser', (banData) => {
-        if (!banData.adminKey || banData.adminKey !== "SECRET_ADMIN_KEY") return; // Secure admin action
+        if (!banData.adminKey || banData.adminKey !== "SECRET_ADMIN_KEY") return;
         if (!banData.ip) return;
 
         bannedUsers[banData.ip] = banData.reason || "No reason provided";
         console.log(`User banned: IP=${banData.ip}, Reason=${banData.reason}`);
-
         io.emit("userBanned", { ip: banData.ip, reason: banData.reason });
     });
 
-    // Handle when a user disconnects
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${userName || "Unknown User"}`);
-
+        
         if (userName) {
-            // Send "User Left" message to chat
+            delete onlineUsers[socket.id]; // Remove from online users
+            io.emit("updateUsers", Object.values(onlineUsers)); // Update online list
+            
             const leaveMessage = { username: "System", message: `${userName} has left the chat!` };
             messages.push(leaveMessage);
             io.emit("receiveMessage", leaveMessage);
@@ -83,10 +86,8 @@ io.on('connection', (socket) => {
     });
 });
 
-// Serve static frontend files
 app.use(express.static(path.join(__dirname, "public")));
 
-// Redirect all unknown routes to login page
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "login.html"));
 });
