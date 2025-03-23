@@ -1,40 +1,40 @@
-const socket = io("https://deadrom.onrender.com"); // Connect to backend
+const socket = io("https://deadrom.onrender.com"); // Replace with your Render URL
 
-// Function to log out and redirect to login page
-function logout() {
-    localStorage.removeItem("username"); // Clear the username from localStorage
-    alert("Logged out successfully!");
-    window.location.href = "login.html"; // Redirect to login page
+// Redirect users to login page if they haven't entered a username
+if (!localStorage.getItem("username")) {
+    window.location.href = "login.html";
 }
 
-// Function to send a message (Make sure this is the ONLY `sendMessage()` function)
+const username = localStorage.getItem("username");
+
+// Function to send messages
 function sendMessage() {
     const messageInput = document.getElementById("messageInput");
-    const username = localStorage.getItem("username") || "Guest";
 
     if (messageInput.value.trim()) {
-        if (messageInput.value.trim().toLowerCase() === "/clear") {
-            socket.emit("clearChat"); // Send clear command to the server
-        } else {
-            socket.emit("sendMessage", { username, message: messageInput.value.trim() });
+        // ✅ Admin command to ban a user: "/ban <IP> <Reason>"
+        if (messageInput.value.startsWith("/ban ")) {
+            const parts = messageInput.value.split(" ");
+            const ip = parts[1];
+            const reason = parts.slice(2).join(" ") || "No reason provided";
+
+            socket.emit("banUser", {
+                adminKey: "SECRET_ADMIN_KEY", // ⚠️ Change this to a secure key
+                ip: ip,
+                reason: reason
+            });
+
+            messageInput.value = "";
+            return;
         }
-        messageInput.value = ""; // Clear input field
+
+        // Send a regular chat message
+        socket.emit("sendMessage", { username, message: messageInput.value.trim() });
+        messageInput.value = "";
     }
 }
 
-// ✅ Fix: Remove duplicate event listener issues
-document.getElementById("messageInput").removeEventListener("keypress", handleKeyPress);
-document.getElementById("messageInput").addEventListener("keypress", handleKeyPress);
-
-// Function to handle Enter key event
-function handleKeyPress(event) {
-    if (event.key === "Enter") {
-        event.preventDefault();
-        sendMessage();
-    }
-}
-
-// Receive messages from the server
+// Listen for new messages
 socket.on("receiveMessage", (data) => {
     const messageList = document.getElementById("messageList");
     const messageElement = document.createElement("li");
@@ -43,10 +43,10 @@ socket.on("receiveMessage", (data) => {
     messageList.scrollTop = messageList.scrollHeight;
 });
 
-// Load past messages on connection
+// Load past messages when connecting
 socket.on("loadMessages", (messages) => {
     const messageList = document.getElementById("messageList");
-    messageList.innerHTML = ""; // Clear existing messages
+    messageList.innerHTML = "";
     messages.forEach((data) => {
         const messageElement = document.createElement("li");
         messageElement.textContent = `${data.username}: ${data.message}`;
@@ -54,12 +54,15 @@ socket.on("loadMessages", (messages) => {
     });
 });
 
-// Handle chat clear
-socket.on("clearChat", () => {
-    document.getElementById("messageList").innerHTML = ""; // Clear chat messages
+// ✅ Notify users when someone is banned
+socket.on("userBanned", (data) => {
+    console.log(`User banned: IP=${data.ip}, Reason=${data.reason}`);
+    alert(`A user was banned!\nIP: ${data.ip}\nReason: ${data.reason}`);
 });
 
-// Redirect users to login page if they didn't enter a username
-if (!localStorage.getItem("username")) {
-    window.location.href = "login.html"; // Send them back to login
-}
+// ✅ If a banned user connects, they are kicked
+socket.on("banned", (reason) => {
+    alert(`You have been banned!\nReason: ${reason}`);
+    window.location.href = "https://google.com"; // Redirect banned users away
+});
+
