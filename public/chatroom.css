@@ -97,3 +97,37 @@ button:active {
 .logoutButton:hover .logoutLogo {
     opacity: 0.7;
 }
+
+.online-users {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 200px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.online-users h3 {
+    margin: 0;
+    font-size: 16px;
+    border-bottom: 1px solid white;
+    padding-bottom: 5px;
+}
+
+.online-users ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.online-users li {
+    padding: 5px 0;
+    font-size: 14px;
+}
+
