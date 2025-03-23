@@ -6,6 +6,6 @@ function login() {
         return;
     }
 
-    localStorage.setItem("username", username); // Save username in local storage
+    localStorage.setItem("username", username); // Save username
     window.location.href = "chatroom.html"; // Redirect to chatroom
 }
