@@ -42,7 +42,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ✅ Redirect all unknown routes to chatroom.html
 app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "chatroom.html"));
+    res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
 const PORT = process.env.PORT || 10000;
