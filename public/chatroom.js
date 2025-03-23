@@ -1,4 +1,4 @@
-const socket = io("http://localhost:3000"); // Connect to backend
+const socket = io("https://deadrom.onrender.com"); // Connect to backend
 
 // Function to log out and redirect to login page
 function logout() {
