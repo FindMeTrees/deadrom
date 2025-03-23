@@ -15,9 +15,11 @@ function sendMessage() {
     const messageInput = document.getElementById("messageInput");
 
     if (messageInput.value.trim()) {
+        const messageText = messageInput.value.trim();
+
         // ✅ Admin command to ban a user: "/ban <IP> <Reason>"
-        if (messageInput.value.startsWith("/ban ")) {
-            const parts = messageInput.value.split(" ");
+        if (messageText.startsWith("/ban ")) {
+            const parts = messageText.split(" ");
             const ip = parts[1];
             const reason = parts.slice(2).join(" ") || "No reason provided";
 
@@ -32,8 +34,8 @@ function sendMessage() {
         }
 
         // ✅ Admin command to unban a user: "/unban <IP>"
-        if (messageInput.value.startsWith("/unban ")) {
-            const parts = messageInput.value.split(" ");
+        if (messageText.startsWith("/unban ")) {
+            const parts = messageText.split(" ");
             const ip = parts[1];
 
             socket.emit("unbanUser", {
@@ -45,28 +47,11 @@ function sendMessage() {
             return;
         }
 
-        // Send a regular chat message
-        socket.emit("sendMessage", { username, message: messageInput.value.trim() });
-        messageInput.value = "";
-    }
-}
+        // ✅ Command to clear chat: "/clear"
+        if (messageText === "/clear") {
+            socket.emit("clearChat");
+            messageInput.value = "";
+            return;
+        }
 
-// ✅ Display all messages in chat (including "User Joined" and "User Left" messages)
-socket.on("receiveMessage", (data) => {
-    const messageList = document.getElementById("messageList");
-    const messageElement = document.createElement("li");
-
-    if (data.username === "System") {
-        messageElement.style.fontStyle = "italic"; // Make system messages stand out
-    }
-
-    messageElement.textContent = `${data.username}: ${data.message}`;
-    messageList.appendChild(messageElement);
-    messageList.scrollTop = messageList.scrollHeight;
-});
-
-// ✅ Notify users when someone is unbanned
-socket.on("userUnbanned", (data) => {
-    console.log(`User unbanned: IP=${data.ip}`);
-    alert(`A user was unbanned!\nIP: ${data.ip}`);
-});
+        // Send
