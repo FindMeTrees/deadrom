@@ -15,41 +15,11 @@ function sendMessage() {
     const messageInput = document.getElementById("messageInput");
 
     if (!messageInput || !messageInput.value.trim()) {
-        console.log("⚠️ Message input is empty or missing.");
+        console.log("⚠️ Message input is empty.");
         return;
     }
 
     const messageText = messageInput.value.trim();
-
-    // ✅ Admin command to ban a user: "/ban <IP> <Reason>"
-    if (messageText.startsWith("/ban ")) {
-        const parts = messageText.split(" ");
-        const ip = parts[1];
-        const reason = parts.slice(2).join(" ") || "No reason provided";
-
-        socket.emit("banUser", {
-            adminKey: "SECRET_ADMIN_KEY", // ⚠️ Change this to a secure key
-            ip: ip,
-            reason: reason
-        });
-
-        messageInput.value = "";
-        return;
-    }
-
-    // ✅ Admin command to unban a user: "/unban <IP>"
-    if (messageText.startsWith("/unban ")) {
-        const parts = messageText.split(" ");
-        const ip = parts[1];
-
-        socket.emit("unbanUser", {
-            adminKey: "SECRET_ADMIN_KEY", // ⚠️ Change this to a secure key
-            ip: ip
-        });
-
-        messageInput.value = "";
-        return;
-    }
 
     // ✅ Command to clear chat: "/clear"
     if (messageText === "/clear") {
@@ -58,13 +28,9 @@ function sendMessage() {
         return;
     }
 
-    // ✅ Ensure username is always included when sending a message
-    socket.emit("sendMessage", {
-        username: localStorage.getItem("username") || "Guest",
-        message: messageText
-    });
-
-    messageInput.value = ""; // Clear input after sending
+    // Send a regular chat message
+    socket.emit("sendMessage", { username, message: messageText });
+    messageInput.value = "";
 }
 
 // ✅ Listen for "Enter" key to send messages
@@ -74,42 +40,19 @@ document.getElementById("messageInput").addEventListener("keypress", function (e
     }
 });
 
+// ✅ Display all messages in chat
+socket.on("receiveMessage", (data) => {
+    const messageList = document.getElementById("messageList");
+    const messageElement = document.createElement("li");
 
-        // ✅ Admin command to ban a user: "/ban <IP> <Reason>"
-        if (messageText.startsWith("/ban ")) {
-            const parts = messageText.split(" ");
-            const ip = parts[1];
-            const reason = parts.slice(2).join(" ") || "No reason provided";
+    if (!data || !data.username || !data.message) return;
 
-            socket.emit("banUser", {
-                adminKey: "SECRET_ADMIN_KEY", // ⚠️ Change this to a secure key
-                ip: ip,
-                reason: reason
-            });
+    messageElement.textContent = `${data.username}: ${data.message}`;
+    messageList.appendChild(messageElement);
+    messageList.scrollTop = messageList.scrollHeight;
+});
 
-            messageInput.value = "";
-            return;
-        }
-
-        // ✅ Admin command to unban a user: "/unban <IP>"
-        if (messageText.startsWith("/unban ")) {
-            const parts = messageText.split(" ");
-            const ip = parts[1];
-
-            socket.emit("unbanUser", {
-                adminKey: "SECRET_ADMIN_KEY", // ⚠️ Change this to a secure key
-                ip: ip
-            });
-
-            messageInput.value = "";
-            return;
-        }
-
-        // ✅ Command to clear chat: "/clear"
-        if (messageText === "/clear") {
-            socket.emit("clearChat");
-            messageInput.value = "";
-            return;
-        }
-
-        // Send
+// ✅ Clear chat when "/clear" command is used
+socket.on("clearChat", () => {
+    document.getElementById("messageList").innerHTML = ""; // Clear chat UI
+});
