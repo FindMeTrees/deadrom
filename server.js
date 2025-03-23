@@ -72,14 +72,31 @@ socket.on('clearChat', () => {
 });
 
 
-    socket.on('banUser', (banData) => {
-        if (!banData.adminKey || banData.adminKey !== "SECRET_ADMIN_KEY") return;
-        if (!banData.ip) return;
+    socket.on('ipBanUser', (banData) => {
+    const ip = getClientIp(socket); // Get the admin's IP
 
-        bannedUsers[banData.ip] = banData.reason || "No reason provided";
-        console.log(`User banned: IP=${banData.ip}, Reason=${banData.reason}`);
-        io.emit("userBanned", { ip: banData.ip, reason: banData.reason });
+    if (ip !== "YOUR_IP_ADDRESS") { // 🔥 Replace with your real IP
+        console.log(`❌ Unauthorized ban attempt from ${ip}`);
+        socket.emit("receiveMessage", { username: "System", message: "❌ You are not allowed to use /ipban!" });
+        return;
+    }
+
+    if (!banData.ip) return;
+
+    bannedUsers[banData.ip] = banData.reason || "No reason provided";
+    console.log(`🚫 Admin (${ip}) banned user: IP=${banData.ip}, Reason=${banData.reason}`);
+
+    // ✅ Kick banned users immediately
+    io.sockets.sockets.forEach((sock) => {
+        if (getClientIp(sock) === banData.ip) {
+            console.log(`⚠️ Kicking user with IP: ${banData.ip}`);
+            sock.emit("banned", bannedUsers[banData.ip]);
+            sock.disconnect();
+        }
     });
+
+    io.emit("userBanned", { ip: banData.ip, reason: banData.reason });
+});
 
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${userName || "Unknown User"}`);
