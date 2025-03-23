@@ -3,7 +3,6 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const useragent = require('useragent');
 
 const app = express();
 const server = http.createServer(app);
@@ -27,9 +26,7 @@ function getClientIp(socket) {
 
 io.on('connection', (socket) => {
     const ip = getClientIp(socket);
-    const agent = useragent.parse(socket.handshake.headers['user-agent']).toString();
-
-    console.log(`User connected: IP=${ip}, Agent=${agent}`);
+    console.log(`User connected: IP=${ip}`);
 
     // Check if the user is banned
     if (bannedUsers[ip]) {
@@ -91,4 +88,3 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
