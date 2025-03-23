@@ -14,7 +14,7 @@ const io = socketIo(server, {
     }
 });
 
-// Store chat messages and banned users (IP -> reason)
+// Store messages and banned users (IP -> reason)
 let messages = [];
 let bannedUsers = {};
 
@@ -35,12 +35,22 @@ io.on('connection', (socket) => {
     if (bannedUsers[ip]) {
         console.log(`Blocked connection from banned IP: ${ip}`);
         socket.emit("banned", bannedUsers[ip]); // Notify the user
-        socket.disconnect(); // Force disconnect
+        socket.disconnect();
         return;
     }
 
     // Send existing messages to new users
     socket.emit('loadMessages', messages);
+
+    // Handle when a user sets their username
+    socket.on("setUsername", (username) => {
+        console.log(`User joined: ${username}`);
+
+        // Send a system message to all users
+        const joinMessage = { username: "System", message: `${username} has joined the chat!` };
+        messages.push(joinMessage); // Store in chat history
+        io.emit("receiveMessage", joinMessage);
+    });
 
     socket.on('sendMessage', (data) => {
         if (bannedUsers[ip]) return; // Prevent banned users from sending messages
@@ -57,13 +67,13 @@ io.on('connection', (socket) => {
 
     // Admin command to ban a user
     socket.on('banUser', (banData) => {
-        if (!banData.adminKey || banData.adminKey !== "SECRET_ADMIN_KEY") return; // Protect admin actions
+        if (!banData.adminKey || banData.adminKey !== "SECRET_ADMIN_KEY") return; // Secure admin action
         if (!banData.ip) return;
 
         bannedUsers[banData.ip] = banData.reason || "No reason provided";
         console.log(`User banned: IP=${banData.ip}, Reason=${banData.reason}`);
 
-        io.emit("userBanned", { ip: banData.ip, reason: banData.reason }); // Notify all users
+        io.emit("userBanned", { ip: banData.ip, reason: banData.reason });
     });
 
     socket.on('disconnect', () => {
@@ -71,7 +81,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Serve static frontend files from "public/" folder
+// Serve static frontend files
 app.use(express.static(path.join(__dirname, "public")));
 
 // Redirect all unknown routes to login page
