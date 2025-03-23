@@ -1,0 +1,156 @@
+body {
+    background-color: black;
+    color: green;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+.form-container {
+    background-color: #333;
+    padding: 40px;
+    border-radius: 10px;
+    width: 300px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid green;
+    background-color: black;
+    color: green;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: green;
+    color: black;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+}
+
+button:hover {
+    background-color: lightgreen;
+    color: black;
+}
+
+button:active {
+    background-color: darkgreen;
+}
+
+a {
+    color: lightgreen;
+}
+
+a:hover {
+    color: green;
+}
+
+
+/* Overall container style */
+#chatContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Make the container take the full height of the screen */
+    padding-bottom: 60px; /* Add space to prevent the input bar from overlapping */
+    justify-content: flex-end; /* Align children to the bottom */
+}
+
+h1 {
+    color: yellow;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-family: Arial, sans-serif;
+}
+
+/* Style for message list */
+#messageList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex-grow: 1; /* Allow message list to grow and take all available space */
+    width: 80%;
+    margin-bottom: 10px;
+}
+
+/* Input container style (Fixed at the bottom) */
+.inputContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed; /* Fix at the bottom of the screen */
+    bottom: 0;
+    width: 100%;
+    background-color: black; /* Optional: Add background color to make it stand out */
+    padding: 10px;
+    box-sizing: border-box;
+    border-top: 2px solid #333;
+}
+
+/* Styling for the message input */
+input[type="text"] {
+    width: 90%;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    background-color: #222;
+    color: white;
+    border-radius: 4px;
+}
+
+/* Send button styling */
+button {
+    padding: 12px 25px;
+    background-color: green;
+    color: black;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    min-width: 150px;
+    text-align: center;
+    border-radius: 4px;
+}
+
+/* Button hover and active states */
+button:hover {
+    background-color: lightgreen;
+    color: black;
+}
+
+button:active {
+    background-color: darkgreen;
+}
+
+/* Logout button positioning */
+.logoutButton {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* Logout logo styling */
+.logoutLogo {
+    width: 40px;
+    height: auto;
+}
+
+.logoutButton:hover .logoutLogo {
+    opacity: 0.7;
+}
